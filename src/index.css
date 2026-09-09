@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+  --color-navy: #001c34;
+  --color-naranja: #ff590d;
+  --color-peach: #fdefea;
+  --color-cian: #00bed3;
+  --color-azul: #0080ff;
+  --color-rosa: #f04170;
+  --color-rojo: #e30050;
+  --color-ambar: #ffaa00;
+  --color-gris-azul: #7997af;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-peach);
+  color: var(--color-navy);
+}
+
+.input {
+  @apply w-full rounded border border-gris-azul/50 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-naranja focus:ring-1 focus:ring-naranja disabled:bg-gray-100 disabled:text-gray-400;
+}
