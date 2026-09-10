@@ -6,6 +6,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [ssoLoading, setSsoLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -14,6 +15,20 @@ export default function Login() {
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (err) setError('No se ha podido iniciar sesión: ' + err.message)
+  }
+
+  async function handleSsoLogin() {
+    setError('')
+    setSsoLoading(true)
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: { scopes: 'email' },
+    })
+    if (err) {
+      setError('No se ha podido iniciar sesión con Microsoft: ' + err.message)
+      setSsoLoading(false)
+    }
+    // Si no hay error, Supabase redirige a Microsoft y esta página se descarga.
   }
 
   return (
@@ -29,6 +44,21 @@ export default function Login() {
             {error}
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={handleSsoLogin}
+          disabled={ssoLoading}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded border border-navy px-4 py-2 text-sm font-medium text-navy hover:bg-peach disabled:opacity-50"
+        >
+          {ssoLoading ? 'Redirigiendo…' : 'Iniciar sesión con Microsoft'}
+        </button>
+
+        <div className="mb-4 flex items-center gap-3 text-xs text-gris-azul">
+          <span className="h-px flex-1 bg-gris-azul/30" />
+          o
+          <span className="h-px flex-1 bg-gris-azul/30" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block text-sm">
