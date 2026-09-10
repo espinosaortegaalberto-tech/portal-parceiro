@@ -64,15 +64,25 @@ export default function Comisiones() {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-navy">Cálculo de comisiones mensuales</h2>
+      <h2 className="mb-6 text-2xl font-bold tracking-tight text-navy">
+        Cálculo de comisiones mensuales
+      </h2>
 
       <div className="mb-6">
         <CargaExcel onCargaCompleta={handleCargaCompleta} />
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      {comisiones.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatTile etiqueta="Partners con comisión" valor={comisiones.length} />
+          <StatTile etiqueta="Contratos del periodo" valor={totalContratos} />
+          <StatTile etiqueta="Total comisiones" valor={formatEuros(totalPeriodo)} acento />
+        </div>
+      )}
+
+      <div className="card">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-navy">Comisiones calculadas</h3>
+          <h3 className="text-lg font-bold tracking-tight text-navy">Comisiones calculadas</h3>
           <select
             value={periodoSeleccionado}
             onChange={(e) => setPeriodoSeleccionado(e.target.value)}
@@ -88,7 +98,7 @@ export default function Comisiones() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+          <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
             {error}
           </div>
         )}
@@ -96,18 +106,18 @@ export default function Comisiones() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
-              <tr className="border-b border-gris-azul/30 bg-navy text-white">
-                <th className="px-3 py-2">Partner</th>
-                <th className="px-3 py-2 text-right">Contratos</th>
-                <th className="px-3 py-2 text-right">Escalón</th>
-                <th className="px-3 py-2 text-right">Base</th>
-                <th className="px-3 py-2 text-right">DD</th>
-                <th className="px-3 py-2 text-right">FE</th>
-                <th className="px-3 py-2 text-right">% SVA</th>
-                <th className="px-3 py-2 text-right">Tarifa SVA</th>
-                <th className="px-3 py-2 text-right">Total base</th>
-                <th className="px-3 py-2 text-right">Total bonus</th>
-                <th className="px-3 py-2 text-right">Total comisión</th>
+              <tr>
+                <th className="th-navy rounded-tl-xl">Partner</th>
+                <th className="th-navy text-right">Contratos</th>
+                <th className="th-navy text-right">Escalón</th>
+                <th className="th-navy text-right">Base</th>
+                <th className="th-navy text-right">DD</th>
+                <th className="th-navy text-right">FE</th>
+                <th className="th-navy text-right">% SVA</th>
+                <th className="th-navy text-right">Tarifa SVA</th>
+                <th className="th-navy text-right">Total base</th>
+                <th className="th-navy text-right">Total bonus</th>
+                <th className="th-navy rounded-tr-xl text-right">Total comisión</th>
               </tr>
             </thead>
             <tbody>
@@ -162,6 +172,17 @@ export default function Comisiones() {
           </table>
         </div>
       </div>
+    </div>
+  )
+}
+
+function StatTile({ etiqueta, valor, acento = false }) {
+  return (
+    <div className="card-tight">
+      <p className="text-xs font-medium uppercase tracking-wide text-gris-azul">{etiqueta}</p>
+      <p className={`mt-1 text-2xl font-bold tracking-tight ${acento ? 'text-naranja' : 'text-navy'}`}>
+        {valor}
+      </p>
     </div>
   )
 }

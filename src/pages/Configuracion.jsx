@@ -84,7 +84,7 @@ export default function Configuracion() {
 
   if (!form) {
     return (
-      <div className="rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+      <div className="rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
         No se ha encontrado ninguna configuración vigente. Revisa que el esquema SQL se haya ejecutado
         correctamente.
       </div>
@@ -93,7 +93,9 @@ export default function Configuracion() {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="mb-2 text-2xl font-bold text-navy">Configuración de parámetros de comisión</h2>
+      <h2 className="mb-2 text-2xl font-bold tracking-tight text-navy">
+        Configuración de parámetros de comisión
+      </h2>
       <p className="mb-6 text-sm text-gris-azul">
         Vigente desde <strong>{config.vigente_desde}</strong>. Al guardar se crea una nueva versión
         vigente; los cálculos de comisiones ya realizados conservan su propio snapshot y no se ven
@@ -101,20 +103,20 @@ export default function Configuracion() {
       </p>
 
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded border border-cian bg-cian/10 px-3 py-2 text-sm text-navy">
+        <div className="mb-4 rounded-xl border border-cian/25 bg-cian/10 px-3 py-2.5 text-sm text-navy">
           {success}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 rounded-lg bg-white p-6 shadow-sm sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="card grid grid-cols-1 gap-4 sm:grid-cols-2">
         {campos.map((campo) => (
           <label key={campo.key} className="block text-sm">
-            <span className="mb-1 block font-medium text-navy">{campo.label}</span>
+            <span className="field-label">{campo.label}</span>
             <input
               type="number"
               step="0.01"
@@ -127,11 +129,7 @@ export default function Configuracion() {
         ))}
 
         <div className="col-span-full mt-2 flex justify-end">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          >
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Guardando…' : 'Guardar nueva versión'}
           </button>
         </div>

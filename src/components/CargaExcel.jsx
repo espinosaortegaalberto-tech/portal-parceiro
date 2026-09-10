@@ -206,17 +206,17 @@ export default function CargaExcel({ onCargaCompleta }) {
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-sm">
-      <h3 className="mb-4 text-lg font-bold text-navy">Cargar Excel de ventas</h3>
+    <div className="card">
+      <h3 className="mb-4 text-lg font-bold tracking-tight text-navy">Cargar Excel de ventas</h3>
 
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
 
       {estado === ESTADOS.RESUMEN && resumen && (
-        <div className="mb-4 rounded border border-cian bg-cian/10 p-4 text-sm text-navy">
+        <div className="mb-4 rounded-xl border border-cian/25 bg-cian/10 p-4 text-sm text-navy">
           <p className="font-semibold">Carga completada para el periodo {resumen.periodo}.</p>
           <ul className="mt-2 list-disc pl-5">
             <li>{resumen.nFilasOk} filas cargadas correctamente</li>
@@ -235,7 +235,7 @@ export default function CargaExcel({ onCargaCompleta }) {
               </ul>
             </details>
           )}
-          <button onClick={reset} className="mt-3 text-sm text-azul hover:underline">
+          <button onClick={reset} className="btn-ghost mt-3">
             Cargar otro fichero
           </button>
         </div>
@@ -249,20 +249,20 @@ export default function CargaExcel({ onCargaCompleta }) {
             accept=".xlsx,.xls"
             onChange={handleFileChange}
             disabled={estado === ESTADOS.PROCESANDO}
-            className="block text-sm text-navy file:mr-3 file:rounded file:border-0 file:bg-naranja file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:opacity-90"
+            className="block text-sm text-navy file:mr-3 file:rounded-lg file:border-0 file:bg-naranja file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm hover:file:opacity-90"
           />
 
           {estado === ESTADOS.PROCESANDO && <p className="mt-3 text-sm text-gris-azul">Procesando…</p>}
 
           {pendiente && estado === ESTADOS.IDLE && (
-            <div className="mt-4 space-y-3 rounded border border-gris-azul/30 p-4">
+            <div className="mt-4 space-y-3 rounded-xl border border-navy/10 bg-peach/30 p-4">
               <p className="text-sm text-navy">
                 <strong>{pendiente.file.name}</strong>: {pendiente.filasValidas.length} filas válidas,{' '}
                 {pendiente.erroresValidacion.length} con errores.
               </p>
 
               <label className="block text-sm">
-                <span className="mb-1 block font-medium text-navy">Periodo (YYYY-MM)</span>
+                <span className="field-label">Periodo (YYYY-MM)</span>
                 <input
                   type="text"
                   value={periodo}
@@ -272,17 +272,14 @@ export default function CargaExcel({ onCargaCompleta }) {
                 />
               </label>
 
-              <button
-                onClick={iniciarCarga}
-                className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
+              <button onClick={iniciarCarga} className="btn-primary">
                 Cargar y calcular comisiones
               </button>
             </div>
           )}
 
           {estado === ESTADOS.CONFIRMAR_REEMPLAZO && pendiente?.cargaExistente && (
-            <div className="mt-4 rounded border border-ambar bg-ambar/10 p-4 text-sm text-navy">
+            <div className="mt-4 rounded-xl border border-ambar/30 bg-ambar/10 p-4 text-sm text-navy">
               <p>
                 Ya existe una carga para el periodo <strong>{periodo}</strong> con{' '}
                 {pendiente.cargaExistente.n_filas} filas (cargada el{' '}
@@ -292,14 +289,11 @@ export default function CargaExcel({ onCargaCompleta }) {
               <div className="mt-3 flex gap-3">
                 <button
                   onClick={() => ejecutarCarga({ reemplazar: true })}
-                  className="rounded bg-rojo px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-rojo px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                 >
                   Reemplazar
                 </button>
-                <button
-                  onClick={reset}
-                  className="rounded border border-gris-azul px-4 py-2 text-sm font-medium text-navy hover:bg-gray-50"
-                >
+                <button onClick={reset} className="btn-secondary">
                   Cancelar
                 </button>
               </div>

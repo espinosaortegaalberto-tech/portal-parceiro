@@ -38,14 +38,14 @@ export default function PartnerForm({ partner, onSave, onCancel, saving }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-bold text-navy">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-navy/5 bg-white p-6 shadow-[0_20px_60px_-12px_rgba(0,28,52,0.35)] sm:p-8">
+        <h2 className="mb-5 text-xl font-bold tracking-tight text-navy">
           {isEdit ? 'Editar partner' : 'Nuevo partner'}
         </h2>
 
         {error && (
-          <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+          <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
             {error}
           </div>
         )}
@@ -155,18 +155,10 @@ export default function PartnerForm({ partner, onSave, onCancel, saving }) {
           </Field>
 
           <div className="col-span-full mt-2 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded border border-gris-azul px-4 py-2 text-sm font-medium text-navy hover:bg-gray-50"
-            >
+            <button type="button" onClick={onCancel} className="btn-secondary">
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-            >
+            <button type="submit" disabled={saving} className="btn-primary">
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
@@ -179,7 +171,7 @@ export default function PartnerForm({ partner, onSave, onCancel, saving }) {
 function Field({ label, required, children }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-navy">
+      <span className="field-label">
         {label}
         {required && <span className="text-rojo"> *</span>}
       </span>

@@ -140,31 +140,27 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-navy/5 bg-white p-6 shadow-[0_20px_60px_-12px_rgba(0,28,52,0.35)] sm:p-8">
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="text-xl font-bold text-navy">Cargar partners desde Excel</h2>
+          <h2 className="text-xl font-bold tracking-tight text-navy">Cargar partners desde Excel</h2>
           <button onClick={onClose} className="text-gris-azul hover:text-navy">
             ✕
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={descargarPlantillaPartners}
-          className="mb-4 rounded border border-azul px-3 py-2 text-sm font-medium text-azul hover:bg-azul/10"
-        >
+        <button type="button" onClick={descargarPlantillaPartners} className="btn-secondary mb-4">
           Descargar plantilla
         </button>
 
         {error && (
-          <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+          <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
             {error}
           </div>
         )}
 
         {estado === ESTADOS.RESUMEN && resumen ? (
-          <div className="rounded border border-cian bg-cian/10 p-4 text-sm text-navy">
+          <div className="rounded-xl border border-cian/25 bg-cian/10 p-4 text-sm text-navy">
             <p className="font-semibold">Carga completada.</p>
             <ul className="mt-2 list-disc pl-5">
               <li>{resumen.nCreados} partners creados</li>
@@ -196,16 +192,10 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
               </details>
             )}
             <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={reset}
-                className="rounded border border-gris-azul px-4 py-2 text-sm font-medium text-navy hover:bg-gray-50"
-              >
+              <button onClick={reset} className="btn-secondary">
                 Cargar otro fichero
               </button>
-              <button
-                onClick={onClose}
-                className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
+              <button onClick={onClose} className="btn-primary">
                 Cerrar
               </button>
             </div>
@@ -218,7 +208,7 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
               accept=".xlsx,.xls"
               onChange={handleFileChange}
               disabled={estado === ESTADOS.PROCESANDO || estado === ESTADOS.CARGANDO}
-              className="block text-sm text-navy file:mr-3 file:rounded file:border-0 file:bg-naranja file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:opacity-90"
+              className="block text-sm text-navy file:mr-3 file:rounded-lg file:border-0 file:bg-naranja file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-sm hover:file:opacity-90"
             />
 
             {estado === ESTADOS.PROCESANDO && (
@@ -226,7 +216,7 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
             )}
 
             {pendiente && (estado === ESTADOS.PREVIEW || estado === ESTADOS.CARGANDO) && (
-              <div className="mt-4 space-y-3 rounded border border-gris-azul/30 p-4 text-sm text-navy">
+              <div className="mt-4 space-y-3 rounded-xl border border-navy/10 bg-peach/30 p-4 text-sm text-navy">
                 <p>
                   <strong>{pendiente.file.name}</strong>: {pendiente.filasValidas.length} partners
                   listos para crear, {pendiente.duplicados.length} duplicados,{' '}
@@ -267,17 +257,13 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
                   <button
                     onClick={confirmarCarga}
                     disabled={estado === ESTADOS.CARGANDO || pendiente.filasValidas.length === 0}
-                    className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                    className="btn-primary"
                   >
                     {estado === ESTADOS.CARGANDO
                       ? 'Cargando…'
                       : `Confirmar carga de ${pendiente.filasValidas.length} partners`}
                   </button>
-                  <button
-                    onClick={reset}
-                    disabled={estado === ESTADOS.CARGANDO}
-                    className="rounded border border-gris-azul px-4 py-2 text-sm font-medium text-navy hover:bg-gray-50"
-                  >
+                  <button onClick={reset} disabled={estado === ESTADOS.CARGANDO} className="btn-secondary">
                     Cancelar
                   </button>
                 </div>

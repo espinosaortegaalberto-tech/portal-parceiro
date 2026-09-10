@@ -166,24 +166,18 @@ export default function Partners() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-navy">Gestión de partners</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-navy">Gestión de partners</h2>
         <div className="flex gap-3">
-          <button
-            onClick={() => setShowCarga(true)}
-            className="rounded border border-naranja px-4 py-2 text-sm font-medium text-naranja hover:bg-naranja/10"
-          >
+          <button onClick={() => setShowCarga(true)} className="btn-outline-accent">
             Cargar partners
           </button>
-          <button
-            onClick={openNewForm}
-            className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-          >
+          <button onClick={openNewForm} className="btn-primary">
             + Nuevo partner
           </button>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-3 rounded-lg bg-white p-4 shadow-sm">
+      <div className="card-tight mb-4 flex flex-wrap gap-3">
         <input
           type="text"
           placeholder="Buscar por nombre o código…"
@@ -236,23 +230,23 @@ export default function Partners() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+      <div className="table-card overflow-x-auto">
         <table className="w-full min-w-[800px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gris-azul/30 bg-navy text-white">
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Empresa</th>
-              <th className="px-4 py-3">Sector</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3">Contacto</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3">Alta</th>
-              <th className="px-4 py-3">Acciones</th>
+            <tr>
+              <th className="th-navy">Código</th>
+              <th className="th-navy">Empresa</th>
+              <th className="th-navy">Sector</th>
+              <th className="th-navy">Categoría</th>
+              <th className="th-navy">Contacto</th>
+              <th className="th-navy">Estado</th>
+              <th className="th-navy">Alta</th>
+              <th className="th-navy">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -291,27 +285,17 @@ export default function Partners() {
                   <td className="px-4 py-3">{p.categoria || '—'}</td>
                   <td className="px-4 py-3">{p.contacto || p.email || '—'}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold text-white ${
-                        p.estado === 'activo' ? 'bg-cian' : 'bg-rojo'
-                      }`}
-                    >
+                    <span className={p.estado === 'activo' ? 'badge-ok' : 'badge-ko'}>
                       {p.estado === 'activo' ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="px-4 py-3">{p.fecha_alta}</td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditForm(p)}
-                        className="text-azul hover:underline"
-                      >
+                    <div className="flex gap-3">
+                      <button onClick={() => openEditForm(p)} className="btn-ghost">
                         Editar
                       </button>
-                      <button
-                        onClick={() => toggleEstado(p)}
-                        className="text-gris-azul hover:underline"
-                      >
+                      <button onClick={() => toggleEstado(p)} className="btn-ghost !text-gris-azul">
                         {p.estado === 'activo' ? 'Desactivar' : 'Activar'}
                       </button>
                     </div>
@@ -331,7 +315,7 @@ export default function Partners() {
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Anterior
           </button>
@@ -341,7 +325,7 @@ export default function Partners() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page + 1 >= totalPages}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Siguiente
           </button>

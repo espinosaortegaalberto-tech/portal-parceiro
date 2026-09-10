@@ -16,6 +16,8 @@ export default function Checks() {
   const [filterEstado, setFilterEstado] = useState('')
   const [page, setPage] = useState(0)
 
+  const [filaEditando, setFilaEditando] = useState(null)
+
   useEffect(() => {
     const t = setTimeout(() => {
       setSearchDebounced(search.trim())
@@ -25,6 +27,7 @@ export default function Checks() {
   }, [search])
 
   useEffect(() => {
+    setFilaEditando(null)
     fetchPartnersConChecks()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchDebounced, filterTipo, filterEstado, page])
@@ -118,9 +121,9 @@ export default function Checks() {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-navy">Control de checks de onboarding</h2>
+      <h2 className="mb-6 text-2xl font-bold tracking-tight text-navy">Control de checks de onboarding</h2>
 
-      <div className="mb-4 flex flex-wrap gap-3 rounded-lg bg-white p-4 shadow-sm">
+      <div className="card-tight mb-4 flex flex-wrap gap-3">
         <input
           type="text"
           placeholder="Buscar por nombre o código…"
@@ -159,63 +162,78 @@ export default function Checks() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+      <div className="table-card overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gris-azul/30 bg-navy text-white">
-              <th className="px-4 py-3">Partner</th>
+            <tr>
+              <th className="th-navy">Partner</th>
               {TIPOS_CHECK.map((t) => (
-                <th key={t.key} className="px-3 py-3 text-center">
+                <th key={t.key} className="th-navy text-center">
                   {t.label}
                 </th>
               ))}
+              <th className="th-navy">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gris-azul">
+                <td colSpan={7} className="px-4 py-8 text-center text-gris-azul">
                   Cargando…
                 </td>
               </tr>
             ) : partners.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gris-azul">
+                <td colSpan={7} className="px-4 py-8 text-center text-gris-azul">
                   No se han encontrado partners.
                 </td>
               </tr>
             ) : (
-              partners.map((p) => (
-                <tr key={p.id} className="border-b border-gris-azul/10 hover:bg-peach/50">
-                  <td className="px-4 py-3 font-medium">{p.nombre_empresa}</td>
-                  {TIPOS_CHECK.map((t) => {
-                    const check = p.checks.find((c) => c.tipo_check === t.key)
-                    const estado = check?.estado ?? 'KO'
-                    return (
-                      <td key={t.key} className="px-3 py-3 text-center">
-                        <button
-                          onClick={() => toggleCheck(p, t.key)}
-                          title={
-                            estado === 'OK' && check?.fecha_ok
-                              ? `OK desde ${check.fecha_ok}`
-                              : 'Pendiente'
-                          }
-                          className={`rounded-full px-3 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-80 ${
-                            estado === 'OK' ? 'bg-cian' : 'bg-rojo'
-                          }`}
-                        >
-                          {estado}
-                        </button>
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))
+              partners.map((p) => {
+                const editable = filaEditando === p.id
+                return (
+                  <tr key={p.id} className="border-b border-gris-azul/10 hover:bg-peach/50">
+                    <td className="px-4 py-3 font-medium">{p.nombre_empresa}</td>
+                    {TIPOS_CHECK.map((t) => {
+                      const check = p.checks.find((c) => c.tipo_check === t.key)
+                      const estado = check?.estado ?? 'KO'
+                      const titulo =
+                        estado === 'OK' && check?.fecha_ok ? `OK desde ${check.fecha_ok}` : 'Pendiente'
+                      const badgeClass = estado === 'OK' ? 'badge-ok' : 'badge-ko'
+                      return (
+                        <td key={t.key} className="px-3 py-3 text-center">
+                          {editable ? (
+                            <button
+                              onClick={() => toggleCheck(p, t.key)}
+                              title={titulo}
+                              className={`${badgeClass} transition-opacity hover:opacity-80`}
+                            >
+                              {estado}
+                            </button>
+                          ) : (
+                            <span title={titulo} className={`${badgeClass} opacity-70`}>
+                              {estado}
+                            </span>
+                          )}
+                        </td>
+                      )
+                    })}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setFilaEditando(editable ? null : p.id)}
+                        className={editable ? 'btn-ghost !text-cian' : 'btn-ghost'}
+                      >
+                        {editable ? 'Listo' : 'Editar'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
@@ -229,7 +247,7 @@ export default function Checks() {
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Anterior
           </button>
@@ -239,7 +257,7 @@ export default function Checks() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page + 1 >= totalPages}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Siguiente
           </button>

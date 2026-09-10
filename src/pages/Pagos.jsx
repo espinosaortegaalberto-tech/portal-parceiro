@@ -142,20 +142,30 @@ export default function Pagos() {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-navy">Pagos de comisiones a partners</h2>
+      <h2 className="mb-6 text-2xl font-bold tracking-tight text-navy">Pagos de comisiones a partners</h2>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border-l-4 border-rojo bg-white p-4 shadow-sm">
-          <p className="text-sm text-gris-azul">Pendiente de pago</p>
-          <p className="text-2xl font-bold text-navy">{formatEuros(resumen.pendiente)}</p>
+        <div className="card-tight flex items-center gap-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rojo/10 text-lg font-bold text-rojo">
+            !
+          </span>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-gris-azul">Pendiente de pago</p>
+            <p className="text-2xl font-bold tracking-tight text-navy">{formatEuros(resumen.pendiente)}</p>
+          </div>
         </div>
-        <div className="rounded-lg border-l-4 border-cian bg-white p-4 shadow-sm">
-          <p className="text-sm text-gris-azul">Pagado</p>
-          <p className="text-2xl font-bold text-navy">{formatEuros(resumen.pagado)}</p>
+        <div className="card-tight flex items-center gap-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cian/10 text-lg font-bold text-cian">
+            ✓
+          </span>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-gris-azul">Pagado</p>
+            <p className="text-2xl font-bold tracking-tight text-navy">{formatEuros(resumen.pagado)}</p>
+          </div>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-3 rounded-lg bg-white p-4 shadow-sm">
+      <div className="card-tight mb-4 flex flex-wrap gap-3">
         <input
           type="text"
           placeholder="Buscar por nombre o código de partner…"
@@ -193,21 +203,21 @@ export default function Pagos() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+      <div className="table-card overflow-x-auto">
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gris-azul/30 bg-navy text-white">
-              <th className="px-4 py-3">Partner</th>
-              <th className="px-4 py-3">Periodo</th>
-              <th className="px-4 py-3 text-right">Importe comisión</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3">Fecha de pago</th>
-              <th className="px-4 py-3">Acciones</th>
+            <tr>
+              <th className="th-navy">Partner</th>
+              <th className="th-navy">Periodo</th>
+              <th className="th-navy text-right">Importe comisión</th>
+              <th className="th-navy">Estado</th>
+              <th className="th-navy">Fecha de pago</th>
+              <th className="th-navy">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -232,28 +242,18 @@ export default function Pagos() {
                   <td className="px-4 py-3">{p.periodo}</td>
                   <td className="px-4 py-3 text-right">{formatEuros(p.total_comision)}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold text-white ${
-                        p.estado_pago === 'pagado' ? 'bg-cian' : 'bg-rojo'
-                      }`}
-                    >
+                    <span className={p.estado_pago === 'pagado' ? 'badge-ok' : 'badge-ko'}>
                       {p.estado_pago === 'pagado' ? 'Pagado' : 'Pendiente'}
                     </span>
                   </td>
                   <td className="px-4 py-3">{p.fecha_pago ?? '—'}</td>
                   <td className="px-4 py-3">
                     {p.estado_pago === 'pagado' ? (
-                      <button
-                        onClick={() => marcarPago(p, 'pendiente')}
-                        className="text-gris-azul hover:underline"
-                      >
+                      <button onClick={() => marcarPago(p, 'pendiente')} className="btn-ghost !text-gris-azul">
                         Marcar pendiente
                       </button>
                     ) : (
-                      <button
-                        onClick={() => marcarPago(p, 'pagado')}
-                        className="text-azul hover:underline"
-                      >
+                      <button onClick={() => marcarPago(p, 'pagado')} className="btn-ghost">
                         Marcar pagado
                       </button>
                     )}
@@ -273,7 +273,7 @@ export default function Pagos() {
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Anterior
           </button>
@@ -283,7 +283,7 @@ export default function Pagos() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page + 1 >= totalPages}
-            className="rounded border border-gris-azul px-3 py-1 disabled:opacity-40"
+            className="btn-pagination"
           >
             Siguiente
           </button>

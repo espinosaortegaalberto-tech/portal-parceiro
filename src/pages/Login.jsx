@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+// Activar cuando el proveedor Azure (Entra ID) esté configurado en Supabase
+// (Authentication → Providers → Azure). Hasta entonces el botón daría error.
+const SSO_HABILITADO = false
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,37 +36,42 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-peach">
-      <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-md">
-        <h1 className="mb-1 text-xl font-bold text-navy">Portal de partners</h1>
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_#fff5f0_0%,_#fdefea_45%,_#fbe3da_100%)] px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-navy/5 bg-white p-8 shadow-[0_1px_2px_rgba(0,28,52,0.04),0_20px_40px_-12px_rgba(0,28,52,0.18)]">
+        <div className="mb-6 flex items-center gap-2.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-naranja shadow-[0_0_0_4px_rgba(255,89,13,0.15)]" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-gris-azul">
+            Acceso interno
+          </span>
+        </div>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-navy">Portal de partners</h1>
         <p className="mb-6 text-sm text-gris-azul">
-          Acceso solo para el equipo interno. Inicia sesión con tu cuenta.
+          Solo para el equipo interno. Inicia sesión con tu cuenta.
         </p>
 
         {error && (
-          <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+          <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
             {error}
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleSsoLogin}
-          disabled={ssoLoading}
-          className="mb-4 flex w-full items-center justify-center gap-2 rounded border border-navy px-4 py-2 text-sm font-medium text-navy hover:bg-peach disabled:opacity-50"
-        >
-          {ssoLoading ? 'Redirigiendo…' : 'Iniciar sesión con Microsoft'}
-        </button>
+        {SSO_HABILITADO && (
+          <>
+            <button type="button" onClick={handleSsoLogin} disabled={ssoLoading} className="btn-secondary mb-4 w-full">
+              {ssoLoading ? 'Redirigiendo…' : 'Iniciar sesión con Microsoft'}
+            </button>
 
-        <div className="mb-4 flex items-center gap-3 text-xs text-gris-azul">
-          <span className="h-px flex-1 bg-gris-azul/30" />
-          o
-          <span className="h-px flex-1 bg-gris-azul/30" />
-        </div>
+            <div className="mb-4 flex items-center gap-3 text-xs text-gris-azul">
+              <span className="h-px flex-1 bg-navy/10" />
+              o
+              <span className="h-px flex-1 bg-navy/10" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-navy">Email</span>
+            <span className="field-label">Email</span>
             <input
               type="email"
               required
@@ -72,7 +81,7 @@ export default function Login() {
             />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-navy">Contraseña</span>
+            <span className="field-label">Contraseña</span>
             <input
               type="password"
               required
@@ -81,11 +90,7 @@ export default function Login() {
               className="input"
             />
           </label>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>

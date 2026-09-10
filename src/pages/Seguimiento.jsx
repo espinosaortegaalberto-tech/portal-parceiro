@@ -164,11 +164,11 @@ export default function Seguimiento() {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-navy">Seguimiento de ventas</h2>
+      <h2 className="mb-6 text-2xl font-bold tracking-tight text-navy">Seguimiento de ventas</h2>
 
-      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm">
+      <div className="card-tight mb-6 flex flex-wrap items-end gap-3">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-navy">Desde</span>
+          <span className="field-label">Desde</span>
           <input
             type="month"
             value={mesDesde}
@@ -177,7 +177,7 @@ export default function Seguimiento() {
           />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-navy">Hasta</span>
+          <span className="field-label">Hasta</span>
           <input
             type="month"
             value={mesHasta}
@@ -188,7 +188,7 @@ export default function Seguimiento() {
 
         <div className="relative">
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-navy">Partner</span>
+            <span className="field-label">Partner</span>
             <input
               type="text"
               value={busquedaPartner}
@@ -201,7 +201,7 @@ export default function Seguimiento() {
             />
           </label>
           {opcionesPartner.length > 0 && !partnerSeleccionado && (
-            <ul className="absolute z-10 mt-1 max-h-48 w-full min-w-[220px] overflow-y-auto rounded border border-gris-azul/30 bg-white shadow-lg">
+            <ul className="absolute z-10 mt-1 max-h-48 w-full min-w-[220px] overflow-y-auto rounded-xl border border-navy/10 bg-white shadow-lg">
               {opcionesPartner.map((p) => (
                 <li key={p.id}>
                   <button
@@ -227,7 +227,7 @@ export default function Seguimiento() {
               setPartnerSeleccionado(null)
               setBusquedaPartner('')
             }}
-            className="text-sm text-azul hover:underline"
+            className="btn-ghost"
           >
             Quitar filtro de partner
           </button>
@@ -235,19 +235,19 @@ export default function Seguimiento() {
       </div>
 
       {rangoInvalido && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           El mes "Desde" no puede ser posterior al mes "Hasta".
         </div>
       )}
       {error && (
-        <div className="mb-4 rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+        <div className="mb-4 rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
           {error}
         </div>
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-navy">Nº de ventas por periodo</h3>
+        <div className="card">
+          <h3 className="mb-4 text-lg font-bold tracking-tight text-navy">Nº de ventas por periodo</h3>
           {loading ? (
             <p className="text-gris-azul">Cargando…</p>
           ) : datosPorPeriodo.length === 0 ? (
@@ -265,8 +265,8 @@ export default function Seguimiento() {
           )}
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-navy">Importe de comisiones por periodo</h3>
+        <div className="card">
+          <h3 className="mb-4 text-lg font-bold tracking-tight text-navy">Importe de comisiones por periodo</h3>
           {loading ? (
             <p className="text-gris-azul">Cargando…</p>
           ) : datosPorPeriodo.length === 0 ? (
@@ -285,8 +285,8 @@ export default function Seguimiento() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-        <h3 className="mb-1 text-lg font-bold text-navy">Nº de ventas por periodo y partner</h3>
+      <div className="card mb-6">
+        <h3 className="mb-1 text-lg font-bold tracking-tight text-navy">Nº de ventas por periodo y partner</h3>
         {!partnerSeleccionado && nombresPartnersGrafico.length > 0 && (
           <p className="mb-3 text-xs text-gris-azul">
             Se muestran los {nombresPartnersGrafico.length} partners con más ventas en el rango
@@ -318,13 +318,13 @@ export default function Seguimiento() {
         )}
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="card">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <h3 className="text-lg font-bold text-navy">Detalle por partner y periodo</h3>
+          <h3 className="text-lg font-bold tracking-tight text-navy">Detalle por partner y periodo</h3>
 
           <div className="flex items-end gap-2">
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-navy">Ordenar por</span>
+              <span className="field-label">Ordenar por</span>
               <select
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value)}
@@ -338,7 +338,7 @@ export default function Seguimiento() {
               type="button"
               onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
               title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}
-              className="rounded border border-gris-azul px-3 py-2 text-sm text-navy hover:bg-peach"
+              className="btn-secondary px-3 py-2"
             >
               {sortDir === 'asc' ? '▲ Asc' : '▼ Desc'}
             </button>
@@ -348,21 +348,18 @@ export default function Seguimiento() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] text-left text-sm">
             <thead>
-              <tr className="border-b border-gris-azul/30 bg-navy text-white">
-                <th className="px-3 py-2">Partner</th>
-                <th
-                  className="cursor-pointer select-none px-3 py-2 hover:underline"
-                  onClick={() => toggleSort('periodo')}
-                >
+              <tr>
+                <th className="th-navy rounded-tl-xl">Partner</th>
+                <th className="th-navy cursor-pointer select-none hover:bg-navy/90" onClick={() => toggleSort('periodo')}>
                   Periodo{flechaOrden('periodo')}
                 </th>
                 <th
-                  className="cursor-pointer select-none px-3 py-2 text-right hover:underline"
+                  className="th-navy cursor-pointer select-none text-right hover:bg-navy/90"
                   onClick={() => toggleSort('n_ventas')}
                 >
                   Nº ventas{flechaOrden('n_ventas')}
                 </th>
-                <th className="px-3 py-2 text-right">Importe comisiones</th>
+                <th className="th-navy rounded-tr-xl text-right">Importe comisiones</th>
               </tr>
             </thead>
             <tbody>

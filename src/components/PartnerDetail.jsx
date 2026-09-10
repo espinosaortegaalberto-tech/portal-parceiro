@@ -33,12 +33,12 @@ export default function PartnerDetail({ partnerId, onClose, onEditar }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-navy/5 bg-white p-6 shadow-[0_20px_60px_-12px_rgba(0,28,52,0.35)] sm:p-8">
         {loading ? (
           <p className="text-gris-azul">Cargando…</p>
         ) : error ? (
-          <div className="rounded border border-rojo bg-rojo/10 px-3 py-2 text-sm text-rojo">
+          <div className="rounded-xl border border-rojo/20 bg-rojo/10 px-3 py-2.5 text-sm text-rojo">
             {error}
           </div>
         ) : (
@@ -46,14 +46,10 @@ export default function PartnerDetail({ partnerId, onClose, onEditar }) {
             <>
               <div className="mb-1 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-navy">{partner.nombre_empresa}</h2>
+                  <h2 className="text-xl font-bold tracking-tight text-navy">{partner.nombre_empresa}</h2>
                   <p className="font-mono text-sm text-gris-azul">{partner.id}</p>
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white ${
-                    partner.estado === 'activo' ? 'bg-cian' : 'bg-rojo'
-                  }`}
-                >
+                <span className={`shrink-0 ${partner.estado === 'activo' ? 'badge-ok' : 'badge-ko'}`}>
                   {partner.estado === 'activo' ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
@@ -93,9 +89,7 @@ export default function PartnerDetail({ partnerId, onClose, onEditar }) {
                     <span
                       key={t.key}
                       title={estado === 'OK' && check?.fecha_ok ? `OK desde ${check.fecha_ok}` : 'Pendiente'}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${
-                        estado === 'OK' ? 'bg-cian' : 'bg-rojo'
-                      }`}
+                      className={estado === 'OK' ? 'badge-ok' : 'badge-ko'}
                     >
                       {t.label}: {estado}
                     </span>
@@ -104,16 +98,10 @@ export default function PartnerDetail({ partnerId, onClose, onEditar }) {
               </div>
 
               <div className="flex justify-end gap-3">
-                <button
-                  onClick={onClose}
-                  className="rounded border border-gris-azul px-4 py-2 text-sm font-medium text-navy hover:bg-gray-50"
-                >
+                <button onClick={onClose} className="btn-secondary">
                   Cerrar
                 </button>
-                <button
-                  onClick={() => onEditar(partner)}
-                  className="rounded bg-naranja px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-                >
+                <button onClick={() => onEditar(partner)} className="btn-primary">
                   Editar
                 </button>
               </div>
