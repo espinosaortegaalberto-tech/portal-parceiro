@@ -121,6 +121,7 @@ export default function Partners() {
       telefono: form.telefono || null,
       contacto: form.contacto || null,
       sector: form.sector || null,
+      region: form.region || null,
       url_web: form.url_web || null,
       estado: form.estado,
       categoria: form.categoria || null,

@@ -2,8 +2,26 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
 
-const COLORES_SERIE = ['#FF590D', '#0080FF', '#00BED3', '#F04170', '#FFAA00', '#7997AF']
-const MAX_PARTNERS_GRAFICO = 6
+const COLORES_SERIE = ['#FF590D', '#0080FF', '#00BED3', '#F04170', '#FFAA00', '#7997AF', '#001C34', '#FDEFEA']
+const MAX_GRUPOS_GRAFICO = 8
+
+const CAMPOS_AGRUPACION = {
+  partner: {
+    etiqueta: 'Partner',
+    etiquetaPlural: 'partners',
+    obtenerClave: (c) => c.partners?.nombre_empresa ?? c.id_partner,
+  },
+  region: {
+    etiqueta: 'Región',
+    etiquetaPlural: 'regiones',
+    obtenerClave: (c) => c.partners?.region || 'Sin región',
+  },
+  sector: {
+    etiqueta: 'Sector',
+    etiquetaPlural: 'sectores',
+    obtenerClave: (c) => c.partners?.sector || 'Sin sector',
+  },
+}
 
 function formatEuros(valor) {
   return Number(valor).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -22,11 +40,19 @@ export default function Seguimiento() {
   const [opcionesPartner, setOpcionesPartner] = useState([])
   const [partnerSeleccionado, setPartnerSeleccionado] = useState(null)
 
+  const [regiones, setRegiones] = useState([])
+  const [sectores, setSectores] = useState([])
+  const [filterRegion, setFilterRegion] = useState('')
+  const [filterSector, setFilterSector] = useState('')
+
+  const [agrupacion, setAgrupacion] = useState('partner')
+
   const [sortField, setSortField] = useState('n_ventas')
   const [sortDir, setSortDir] = useState('desc')
 
   useEffect(() => {
     fetchRangoDisponible()
+    fetchFilterOptions()
   }, [])
 
   useEffect(() => {
@@ -46,7 +72,7 @@ export default function Seguimiento() {
   useEffect(() => {
     if (mesDesde && mesHasta) fetchComisionesRango()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mesDesde, mesHasta, partnerSeleccionado])
+  }, [mesDesde, mesHasta, partnerSeleccionado, filterRegion, filterSector])
 
   async function fetchRangoDisponible() {
     const { data, error: err } = await supabase.from('cargas').select('periodo').order('periodo')
@@ -64,6 +90,19 @@ export default function Seguimiento() {
     }
   }
 
+  async function fetchFilterOptions() {
+    const { data, error: err } = await supabase.from('partners').select('region, sector')
+    if (err) return
+    const regs = new Set()
+    const secs = new Set()
+    for (const row of data) {
+      if (row.region) regs.add(row.region)
+      if (row.sector) secs.add(row.sector)
+    }
+    setRegiones([...regs].sort())
+    setSectores([...secs].sort())
+  }
+
   async function buscarPartners(texto) {
     const { data } = await supabase
       .from('partners')
@@ -77,13 +116,34 @@ export default function Seguimiento() {
     setLoading(true)
     setError('')
 
+    let idsPorRegionSector = null
+    if (filterRegion || filterSector) {
+      let partnersQuery = supabase.from('partners').select('id')
+      if (filterRegion) partnersQuery = partnersQuery.eq('region', filterRegion)
+      if (filterSector) partnersQuery = partnersQuery.eq('sector', filterSector)
+
+      const { data: partnersFiltrados, error: errFiltro } = await partnersQuery
+      if (errFiltro) {
+        setError('Error al filtrar por región/sector: ' + errFiltro.message)
+        setLoading(false)
+        return
+      }
+      idsPorRegionSector = partnersFiltrados.map((p) => p.id)
+      if (idsPorRegionSector.length === 0) {
+        setComisionesRango([])
+        setLoading(false)
+        return
+      }
+    }
+
     let query = supabase
       .from('comisiones')
-      .select('id_partner, periodo, n_contratos, total_comision, partners(nombre_empresa)')
+      .select('id_partner, periodo, n_contratos, total_comision, partners(nombre_empresa, region, sector)')
       .gte('periodo', mesDesde)
       .lte('periodo', mesHasta)
 
     if (partnerSeleccionado) query = query.eq('id_partner', partnerSeleccionado.id)
+    if (idsPorRegionSector) query = query.in('id_partner', idsPorRegionSector)
 
     const { data, error: err } = await query
     if (err) {
@@ -106,33 +166,32 @@ export default function Seguimiento() {
     return [...mapa.values()].sort((a, b) => a.periodo.localeCompare(b.periodo))
   }, [comisionesRango])
 
-  const { datosPorPartner, nombresPartnersGrafico } = useMemo(() => {
-    const totalesPorPartner = new Map()
+  const { datosPorGrupo, nombresGrupo } = useMemo(() => {
+    const obtenerClave = CAMPOS_AGRUPACION[agrupacion].obtenerClave
+    const totalesPorGrupo = new Map()
     for (const c of comisionesRango) {
-      const nombre = c.partners?.nombre_empresa ?? c.id_partner
-      const actual = totalesPorPartner.get(c.id_partner) ?? { nombre, total: 0 }
-      actual.total += c.n_contratos
-      totalesPorPartner.set(c.id_partner, actual)
+      const clave = obtenerClave(c)
+      totalesPorGrupo.set(clave, (totalesPorGrupo.get(clave) ?? 0) + c.n_contratos)
     }
-    const topPartners = [...totalesPorPartner.entries()]
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, MAX_PARTNERS_GRAFICO)
-    const idsTop = new Set(topPartners.map(([id]) => id))
-    const nombrePorId = new Map(topPartners.map(([id, v]) => [id, v.nombre]))
+    const topGrupos = [...totalesPorGrupo.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_GRUPOS_GRAFICO)
+    const clavesTop = new Set(topGrupos.map(([clave]) => clave))
 
     const periodos = datosPorPeriodo.map((d) => d.periodo)
     const porPeriodo = new Map(periodos.map((p) => [p, { periodo: p }]))
     for (const c of comisionesRango) {
-      if (!idsTop.has(c.id_partner)) continue
+      const clave = obtenerClave(c)
+      if (!clavesTop.has(clave)) continue
       const fila = porPeriodo.get(c.periodo)
-      if (fila) fila[nombrePorId.get(c.id_partner)] = c.n_contratos
+      if (fila) fila[clave] = (fila[clave] ?? 0) + c.n_contratos
     }
 
     return {
-      datosPorPartner: periodos.map((p) => porPeriodo.get(p)),
-      nombresPartnersGrafico: [...nombrePorId.values()],
+      datosPorGrupo: periodos.map((p) => porPeriodo.get(p)),
+      nombresGrupo: topGrupos.map(([clave]) => clave),
     }
-  }, [comisionesRango, datosPorPeriodo])
+  }, [comisionesRango, datosPorPeriodo, agrupacion])
 
   const filasOrdenadas = useMemo(() => {
     const arr = [...comisionesRango]
@@ -161,6 +220,7 @@ export default function Seguimiento() {
   }
 
   const rangoInvalido = mesDesde && mesHasta && mesDesde > mesHasta
+  const infoAgrupacion = CAMPOS_AGRUPACION[agrupacion]
 
   return (
     <div>
@@ -221,15 +281,49 @@ export default function Seguimiento() {
           )}
         </div>
 
-        {(partnerSeleccionado || busquedaPartner) && (
+        <label className="block text-sm">
+          <span className="field-label">Región</span>
+          <select
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            className="input max-w-[170px]"
+          >
+            <option value="">Todas las regiones</option>
+            {regiones.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block text-sm">
+          <span className="field-label">Sector</span>
+          <select
+            value={filterSector}
+            onChange={(e) => setFilterSector(e.target.value)}
+            className="input max-w-[170px]"
+          >
+            <option value="">Todos los sectores</option>
+            {sectores.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {(partnerSeleccionado || busquedaPartner || filterRegion || filterSector) && (
           <button
             onClick={() => {
               setPartnerSeleccionado(null)
               setBusquedaPartner('')
+              setFilterRegion('')
+              setFilterSector('')
             }}
             className="btn-ghost"
           >
-            Quitar filtro de partner
+            Quitar filtros
           </button>
         )}
       </div>
@@ -286,26 +380,42 @@ export default function Seguimiento() {
       </div>
 
       <div className="card mb-6">
-        <h3 className="mb-1 text-lg font-bold tracking-tight text-navy">Nº de ventas por periodo y partner</h3>
-        {!partnerSeleccionado && nombresPartnersGrafico.length > 0 && (
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-bold tracking-tight text-navy">
+            Nº de ventas por periodo y {infoAgrupacion.etiqueta.toLowerCase()}
+          </h3>
+          <label className="block text-sm">
+            <span className="field-label">Comparar por</span>
+            <select
+              value={agrupacion}
+              onChange={(e) => setAgrupacion(e.target.value)}
+              className="input max-w-[160px]"
+            >
+              <option value="partner">Partner</option>
+              <option value="region">Región</option>
+              <option value="sector">Sector</option>
+            </select>
+          </label>
+        </div>
+        {nombresGrupo.length > 0 && (
           <p className="mb-3 text-xs text-gris-azul">
-            Se muestran los {nombresPartnersGrafico.length} partners con más ventas en el rango
-            seleccionado.
+            Se muestran los {nombresGrupo.length} {infoAgrupacion.etiquetaPlural} con más ventas en el
+            rango seleccionado.
           </p>
         )}
         {loading ? (
           <p className="text-gris-azul">Cargando…</p>
-        ) : datosPorPartner.length === 0 || nombresPartnersGrafico.length === 0 ? (
+        ) : datosPorGrupo.length === 0 || nombresGrupo.length === 0 ? (
           <p className="text-gris-azul">No hay datos para el rango seleccionado.</p>
         ) : (
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={datosPorPartner}>
+            <BarChart data={datosPorGrupo}>
               <CartesianGrid strokeDasharray="3 3" stroke="#7997AF33" vertical={false} />
               <XAxis dataKey="periodo" stroke="#001C34" fontSize={12} />
               <YAxis stroke="#001C34" fontSize={12} allowDecimals={false} />
               <Tooltip />
               <Legend />
-              {nombresPartnersGrafico.map((nombre, i) => (
+              {nombresGrupo.map((nombre, i) => (
                 <Bar
                   key={nombre}
                   dataKey={nombre}

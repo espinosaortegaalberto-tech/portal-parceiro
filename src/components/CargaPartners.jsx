@@ -113,6 +113,7 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
         telefono: f.telefono,
         contacto: f.contacto,
         sector: f.sector,
+        region: f.region,
         url_web: f.url_web,
         estado: f.estado,
         categoria: f.categoria,

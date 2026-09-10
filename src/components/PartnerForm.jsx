@@ -8,6 +8,7 @@ const emptyPartner = {
   telefono: '',
   contacto: '',
   sector: '',
+  region: '',
   url_web: '',
   estado: 'activo',
   categoria: '',
@@ -112,6 +113,15 @@ export default function PartnerForm({ partner, onSave, onCancel, saving }) {
               type="text"
               value={form.sector || ''}
               onChange={(e) => handleChange('sector', e.target.value)}
+              className="input"
+            />
+          </Field>
+
+          <Field label="Región">
+            <input
+              type="text"
+              value={form.region || ''}
+              onChange={(e) => handleChange('region', e.target.value)}
               className="input"
             />
           </Field>

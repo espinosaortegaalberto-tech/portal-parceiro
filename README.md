@@ -57,6 +57,7 @@ Pasos:
    - `001_fn_versionar_configuracion_comisiones.sql` — función RPC que usa la pantalla de configuración de comisiones.
    - `002_vistas_seguimiento_ventas.sql` — vistas agregadas (actualmente sin uso por la UI; ver nota en CLAUDE.md).
    - `003_estado_pago_comisiones.sql` — añade `estado_pago`/`fecha_pago` a `comisiones`, usado por la pantalla de pagos.
+   - `004_region_partners.sql` — añade el campo `region` a `partners`.
 4. Verifica en **Table Editor** que se han creado las tablas: `partners`, `cargas`, `ventas`, `configuracion_comisiones`, `comisiones`, `checks`.
 
 ## Configuración manual de Entra ID SSO (pendiente para el final del proyecto)
