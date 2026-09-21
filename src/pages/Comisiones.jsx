@@ -61,6 +61,7 @@ export default function Comisiones() {
 
   const totalPeriodo = comisiones.reduce((acc, c) => acc + Number(c.total_comision), 0)
   const totalContratos = comisiones.reduce((acc, c) => acc + Number(c.n_contratos), 0)
+  const totalAltaPotencia = comisiones.reduce((acc, c) => acc + Number(c.n_alta_potencia ?? 0), 0)
 
   return (
     <div>
@@ -73,9 +74,10 @@ export default function Comisiones() {
       </div>
 
       {comisiones.length > 0 && (
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <StatTile etiqueta="Partners con comisión" valor={comisiones.length} />
           <StatTile etiqueta="Contratos del periodo" valor={totalContratos} />
+          <StatTile etiqueta="Contratos alta potencia (>20,7 kVA)" valor={totalAltaPotencia} />
           <StatTile etiqueta="Total comisiones" valor={formatEuros(totalPeriodo)} acento />
         </div>
       )}
@@ -104,32 +106,52 @@ export default function Comisiones() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[1400px] text-left text-sm">
             <thead>
               <tr>
-                <th className="th-navy rounded-tl-xl">Partner</th>
-                <th className="th-navy text-right">Contratos</th>
-                <th className="th-navy text-right">Escalón</th>
+                <th className="th-navy rounded-tl-xl" rowSpan={2}>
+                  Partner
+                </th>
+                <th className="th-navy text-right" rowSpan={2}>
+                  Contratos
+                </th>
+                <th
+                  className="th-navy border-l-2 border-naranja !bg-naranja/25 text-center"
+                  colSpan={6}
+                >
+                  Electricidad
+                </th>
+                <th className="th-navy border-l-2 border-azul !bg-azul/25 text-center" colSpan={5}>
+                  Gas
+                </th>
+                <th className="th-navy rounded-tr-xl text-right" rowSpan={2}>
+                  Total comisión
+                </th>
+              </tr>
+              <tr>
+                <th className="th-navy border-l-2 border-naranja text-right">N</th>
+                <th className="th-navy text-right">Base</th>
+                <th className="th-navy text-right">Alta pot.</th>
+                <th className="th-navy text-right">DD</th>
+                <th className="th-navy text-right">FE</th>
+                <th className="th-navy text-right">Total luz</th>
+                <th className="th-navy border-l-2 border-azul text-right">N</th>
                 <th className="th-navy text-right">Base</th>
                 <th className="th-navy text-right">DD</th>
                 <th className="th-navy text-right">FE</th>
-                <th className="th-navy text-right">% SVA</th>
-                <th className="th-navy text-right">Tarifa SVA</th>
-                <th className="th-navy text-right">Total base</th>
-                <th className="th-navy text-right">Total bonus</th>
-                <th className="th-navy rounded-tr-xl text-right">Total comisión</th>
+                <th className="th-navy text-right">Total gas</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-6 text-center text-gris-azul">
+                  <td colSpan={14} className="px-3 py-6 text-center text-gris-azul">
                     Cargando…
                   </td>
                 </tr>
               ) : comisiones.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-6 text-center text-gris-azul">
+                  <td colSpan={14} className="px-3 py-6 text-center text-gris-azul">
                     No hay comisiones calculadas para este periodo.
                   </td>
                 </tr>
@@ -140,18 +162,36 @@ export default function Comisiones() {
                       {c.partners?.nombre_empresa ?? c.id_partner}
                     </td>
                     <td className="px-3 py-2 text-right">{c.n_contratos}</td>
-                    <td className="px-3 py-2 text-right">{c.escalon_aplicado}</td>
-                    <td className="px-3 py-2 text-right">{formatEuros(c.base_aplicada)}</td>
-                    <td className="px-3 py-2 text-right">{c.n_dd}</td>
-                    <td className="px-3 py-2 text-right">{c.n_fe}</td>
-                    <td className="px-3 py-2 text-right">{Number(c.pct_sva).toFixed(1)}%</td>
-                    <td className="px-3 py-2 text-right">{formatEuros(c.tarifa_sva_aplicada)}</td>
-                    <td className="px-3 py-2 text-right">{formatEuros(c.total_base)}</td>
+
+                    <td className="border-l-2 border-naranja/30 px-3 py-2 text-right">
+                      {c.n_contratos_luz}
+                    </td>
+                    <td className="px-3 py-2 text-right">{formatEuros(c.base_luz)}</td>
                     <td className="px-3 py-2 text-right">
-                      {formatEuros(
-                        Number(c.total_bonus_dd) + Number(c.total_bonus_fe) + Number(c.total_bonus_sva)
+                      {c.n_alta_potencia > 0 ? (
+                        <span className="font-semibold text-naranja">{c.n_alta_potencia}</span>
+                      ) : (
+                        0
                       )}
                     </td>
+                    <td className="px-3 py-2 text-right">{c.n_dd_luz}</td>
+                    <td className="px-3 py-2 text-right">{c.n_fe_luz}</td>
+                    <td className="px-3 py-2 text-right font-semibold">
+                      {formatEuros(c.total_comision_luz)}
+                    </td>
+
+                    <td className="border-l-2 border-azul/30 px-3 py-2 text-right">
+                      {c.n_contratos_gas}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {c.n_contratos_gas > 0 ? formatEuros(c.base_gas) : '—'}
+                    </td>
+                    <td className="px-3 py-2 text-right">{c.n_dd_gas}</td>
+                    <td className="px-3 py-2 text-right">{c.n_fe_gas}</td>
+                    <td className="px-3 py-2 text-right font-semibold">
+                      {formatEuros(c.total_comision_gas)}
+                    </td>
+
                     <td className="px-3 py-2 text-right font-semibold">
                       {formatEuros(c.total_comision)}
                     </td>
@@ -164,7 +204,7 @@ export default function Comisiones() {
                 <tr className="border-t-2 border-navy font-semibold">
                   <td className="px-3 py-2">Total periodo</td>
                   <td className="px-3 py-2 text-right">{totalContratos}</td>
-                  <td className="px-3 py-2" colSpan={8}></td>
+                  <td className="px-3 py-2" colSpan={11}></td>
                   <td className="px-3 py-2 text-right">{formatEuros(totalPeriodo)}</td>
                 </tr>
               </tfoot>

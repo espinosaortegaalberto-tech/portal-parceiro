@@ -4,7 +4,8 @@ const COLUMNAS_REQUERIDAS = [
   'id_partner',
   'id_contrato',
   'fecha_cierre',
-  'producto',
+  'electricidad',
+  'gas',
   'debito_directo',
   'factura_electronica',
   'sva',
@@ -85,6 +86,8 @@ export async function parseExcelFile(file) {
   const tieneImporte = 'importe_contrato' in mapaCabeceras
   const tieneCliente = 'cliente' in mapaCabeceras
   const tienePeriodo = 'periodo' in mapaCabeceras
+  const tienePotencia = 'potencia_kva' in mapaCabeceras
+  const tieneProducto = 'producto' in mapaCabeceras
 
   const filas = []
   const errores = []
@@ -105,11 +108,24 @@ export async function parseExcelFile(file) {
       return
     }
 
+    const electricidad = parseBooleano(get('electricidad'))
+    const gas = parseBooleano(get('gas'))
+    if (!electricidad && !gas) {
+      errores.push({
+        fila: numeroFila,
+        motivo: 'El contrato debe ser de electricidad, de gas, o de ambos',
+      })
+      return
+    }
+
     filas.push({
       id_partner: String(idPartner).trim(),
       id_contrato: String(idContrato).trim(),
       fecha_cierre: parseFecha(get('fecha_cierre')),
-      producto: get('producto') ? String(get('producto')).trim() : null,
+      producto: tieneProducto && get('producto') ? String(get('producto')).trim() : null,
+      electricidad,
+      gas,
+      potencia_kva: tienePotencia && get('potencia_kva') !== null ? Number(get('potencia_kva')) : null,
       debito_directo: parseBooleano(get('debito_directo')),
       factura_electronica: parseBooleano(get('factura_electronica')),
       sva: parseBooleano(get('sva')),

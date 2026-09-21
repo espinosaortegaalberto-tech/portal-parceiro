@@ -12,6 +12,16 @@ const campos = [
   { key: 'sva_tarifa_baja', label: 'Tarifa SVA baja (€/contrato)' },
   { key: 'sva_tarifa_alta', label: 'Tarifa SVA alta (€/contrato)' },
   { key: 'sva_umbral_pct', label: 'Umbral % SVA para tarifa alta' },
+  {
+    key: 'potencia_umbral_kva',
+    label: 'Umbral potencia contratada (kVA)',
+    hint: 'Solo electricidad. Por encima de este valor aplica la base de alta potencia.',
+  },
+  {
+    key: 'base_alta_potencia',
+    label: 'Base de alta potencia (€/contrato)',
+    hint: 'Sustituye a la base por escalón para esos contratos, sea cual sea el escalón del mes.',
+  },
 ]
 
 export default function Configuracion() {
@@ -65,6 +75,8 @@ export default function Configuracion() {
       p_sva_tarifa_baja: Number(form.sva_tarifa_baja),
       p_sva_tarifa_alta: Number(form.sva_tarifa_alta),
       p_sva_umbral_pct: Number(form.sva_umbral_pct),
+      p_potencia_umbral_kva: Number(form.potencia_umbral_kva),
+      p_base_alta_potencia: Number(form.base_alta_potencia),
     })
 
     setSaving(false)

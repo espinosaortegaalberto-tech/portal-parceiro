@@ -58,6 +58,8 @@ Pasos:
    - `002_vistas_seguimiento_ventas.sql` — vistas agregadas (actualmente sin uso por la UI; ver nota en CLAUDE.md).
    - `003_estado_pago_comisiones.sql` — añade `estado_pago`/`fecha_pago` a `comisiones`, usado por la pantalla de pagos.
    - `004_region_partners.sql` — añade el campo `region` a `partners`.
+   - `005_comisiones_gas_potencia.sql` — añade `electricidad`/`gas`/`potencia_kva` a `ventas` y las columnas de comisión por combustible (`_luz`/`_gas`) a `comisiones`.
+   - `006_config_alta_potencia.sql` — añade `potencia_umbral_kva`/`base_alta_potencia` a `configuracion_comisiones` y actualiza la función RPC de versionado.
 4. Verifica en **Table Editor** que se han creado las tablas: `partners`, `cargas`, `ventas`, `configuracion_comisiones`, `comisiones`, `checks`.
 
 ## Configuración manual de Entra ID SSO (pendiente para el final del proyecto)
