@@ -1,6 +1,11 @@
 // Modelo de comisiones: ver CLAUDE.md y sección 5 del documento de especificación.
 // Escalado retroactivo por nº de contratos + bonus DD/FE + bonus de nivel SVA.
 //
+// El bonus SVA: la TARIFA (10€ o 14€) se elige según si el % de contratos con
+// SVA del mes es menor o mayor/igual al umbral configurado, pero el bonus solo
+// se paga sobre los contratos que efectivamente tienen SVA (no sobre todos los
+// contratos del mes).
+//
 // Un contrato puede ser de electricidad, de gas, o de ambos (dual). Para un
 // contrato dual se calcula y paga comisión de electricidad Y de gas, cada una
 // con EXACTAMENTE la misma lógica (escalado + bonus DD/FE + bonus SVA) y los
@@ -54,7 +59,7 @@ function calcularComisionCombustible(contratos, config, esElectricidad) {
 
   const totalBonusDd = nDd * Number(config.bonus_dd)
   const totalBonusFe = nFe * Number(config.bonus_fe)
-  const totalBonusSva = tarifaSva * nContratos
+  const totalBonusSva = tarifaSva * nSva
   const totalComision = totalBase + totalBonusDd + totalBonusFe + totalBonusSva
 
   return {

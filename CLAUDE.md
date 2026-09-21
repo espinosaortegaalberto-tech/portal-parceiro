@@ -10,7 +10,7 @@
 - snake_case en BBDD. Esquema en supabase/schema.sql; migraciones en supabase/migrations/ (ejecución MANUAL en SQL Editor de Supabase; avisar siempre que haga falta ejecutar SQL antes de que funcione el frontend).
 - El match Excel↔partner es por id_partner. importe_contrato NO entra en el cálculo de comisión (solo reporting).
 - Modelo de comisiones (todo editable en pantalla de configuración, con histórico y snapshot por cálculo):
-  base por escalado RETROACTIVO (1-5→26, 6-12→28, 13+→30) + 4€/DD + 1€/FE + SVA(10/14€ según <10% o ≥10% de contratos con SVA, aplicado a TODOS los contratos del mes).
+  base por escalado RETROACTIVO (1-5→26, 6-12→28, 13+→30) + 4€/DD + 1€/FE + SVA (tarifa 10€ o 14€ según <10% o ≥10% de contratos con SVA del mes; esa tarifa se paga solo sobre los contratos que tienen SVA, no sobre todos los del mes).
   Un contrato puede ser de electricidad, de gas, o ambos (dual); gas usa EXACTAMENTE la misma lógica y los mismos parámetros que electricidad, calculada de forma independiente (un contrato dual paga comisión de luz Y de gas). Solo electricidad: si `potencia_kva` > umbral configurable (por defecto 20,7 kVA), la base de ESE contrato pasa a ser una base de alta potencia configurable (por defecto 60€), sin importar el escalón de volumen del mes.
 - Nunca subir datos reales de partners al repo (.gitignore: .env, *.xlsx de datos, PDFs generados).
 

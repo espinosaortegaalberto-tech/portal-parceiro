@@ -106,7 +106,7 @@ export default function Comisiones() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1400px] text-left text-sm">
+          <table className="w-full min-w-[1700px] text-left text-sm">
             <thead>
               <tr>
                 <th className="th-navy rounded-tl-xl" rowSpan={2}>
@@ -117,7 +117,7 @@ export default function Comisiones() {
                 </th>
                 <th
                   className="th-navy border-l-2 border-naranja !bg-naranja/25 text-center"
-                  colSpan={6}
+                  colSpan={8}
                 >
                   Electricidad
                 </th>
@@ -129,11 +129,13 @@ export default function Comisiones() {
                 </th>
               </tr>
               <tr>
-                <th className="th-navy border-l-2 border-naranja text-right">N</th>
+                <th className="th-navy border-l-2 border-naranja text-right">N ≤20,7 kVA</th>
+                <th className="th-navy text-right">N &gt;20,7 kVA</th>
                 <th className="th-navy text-right">Base</th>
-                <th className="th-navy text-right">Alta pot.</th>
                 <th className="th-navy text-right">DD</th>
                 <th className="th-navy text-right">FE</th>
+                <th className="th-navy text-right">N SVA</th>
+                <th className="th-navy text-right">€ SVA</th>
                 <th className="th-navy text-right">Total luz</th>
                 <th className="th-navy border-l-2 border-azul text-right">N</th>
                 <th className="th-navy text-right">Base</th>
@@ -145,13 +147,13 @@ export default function Comisiones() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={14} className="px-3 py-6 text-center text-gris-azul">
+                  <td colSpan={16} className="px-3 py-6 text-center text-gris-azul">
                     Cargando…
                   </td>
                 </tr>
               ) : comisiones.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-3 py-6 text-center text-gris-azul">
+                  <td colSpan={16} className="px-3 py-6 text-center text-gris-azul">
                     No hay comisiones calculadas para este periodo.
                   </td>
                 </tr>
@@ -164,9 +166,8 @@ export default function Comisiones() {
                     <td className="px-3 py-2 text-right">{c.n_contratos}</td>
 
                     <td className="border-l-2 border-naranja/30 px-3 py-2 text-right">
-                      {c.n_contratos_luz}
+                      {c.n_contratos_luz - (c.n_alta_potencia ?? 0)}
                     </td>
-                    <td className="px-3 py-2 text-right">{formatEuros(c.base_luz)}</td>
                     <td className="px-3 py-2 text-right">
                       {c.n_alta_potencia > 0 ? (
                         <span className="font-semibold text-naranja">{c.n_alta_potencia}</span>
@@ -174,8 +175,11 @@ export default function Comisiones() {
                         0
                       )}
                     </td>
+                    <td className="px-3 py-2 text-right">{formatEuros(c.base_luz)}</td>
                     <td className="px-3 py-2 text-right">{c.n_dd_luz}</td>
                     <td className="px-3 py-2 text-right">{c.n_fe_luz}</td>
+                    <td className="px-3 py-2 text-right">{c.n_sva_luz}</td>
+                    <td className="px-3 py-2 text-right">{formatEuros(c.total_bonus_sva_luz)}</td>
                     <td className="px-3 py-2 text-right font-semibold">
                       {formatEuros(c.total_comision_luz)}
                     </td>
@@ -204,7 +208,7 @@ export default function Comisiones() {
                 <tr className="border-t-2 border-navy font-semibold">
                   <td className="px-3 py-2">Total periodo</td>
                   <td className="px-3 py-2 text-right">{totalContratos}</td>
-                  <td className="px-3 py-2" colSpan={11}></td>
+                  <td className="px-3 py-2" colSpan={13}></td>
                   <td className="px-3 py-2 text-right">{formatEuros(totalPeriodo)}</td>
                 </tr>
               </tfoot>

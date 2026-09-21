@@ -27,8 +27,8 @@ function venta({ dd = false, fe = false, sva = false, electricidad = true, gas =
   }
 }
 
-describe('calcularComisionPartner — electricidad (ejemplo de la sección 5)', () => {
-  it('8 contratos, 6 DD, 5 FE, 2 SVA => 365 €', () => {
+describe('calcularComisionPartner — electricidad (ejemplo de la sección 5, adaptado)', () => {
+  it('8 contratos, 6 DD, 5 FE, 2 SVA => la tarifa SVA (según %) se paga solo sobre los 2 contratos con SVA', () => {
     const ventasPartner = [
       venta({ dd: true, fe: true, sva: true }),
       venta({ dd: true, fe: true, sva: true }),
@@ -51,10 +51,11 @@ describe('calcularComisionPartner — electricidad (ejemplo de la sección 5)', 
     expect(resultado.n_sva_luz).toBe(2)
     expect(resultado.pct_sva_luz).toBeCloseTo(25)
     expect(resultado.tarifa_sva_luz).toBe(14)
-    expect(resultado.total_comision_luz).toBe(365)
+    // base 28*8=224 + DD 4*6=24 + FE 1*5=5 + SVA 14*2(solo los SVA)=28 => 281
+    expect(resultado.total_comision_luz).toBe(281)
     expect(resultado.n_contratos_gas).toBe(0)
     expect(resultado.total_comision_gas).toBe(0)
-    expect(resultado.total_comision).toBe(365)
+    expect(resultado.total_comision).toBe(281)
   })
 
   it('escalón 1: hasta 5 contratos', () => {
@@ -152,13 +153,13 @@ describe('calcularComisionPartner — contratos duales (electricidad + gas)', ()
     expect(resultado.n_contratos).toBe(8)
     expect(resultado.n_contratos_luz).toBe(6)
     expect(resultado.escalon_luz).toBe(2)
-    // 0% SVA (<10%) → tarifa baja (10€) aplicada a los 6 contratos: 6*28 + 6*10 = 228
-    expect(resultado.total_comision_luz).toBe(6 * 28 + 6 * 10)
+    // 0% SVA (<10%) → tarifa baja, pero 0 contratos con SVA => bonus SVA = 0: 6*28 = 168
+    expect(resultado.total_comision_luz).toBe(6 * 28)
 
     expect(resultado.n_contratos_gas).toBe(2)
     expect(resultado.escalon_gas).toBe(1)
-    // 0% SVA (<10%) → tarifa baja (10€) aplicada a los 2 contratos: 2*26 + 2*10 = 72
-    expect(resultado.total_comision_gas).toBe(2 * 26 + 2 * 10)
+    // 0% SVA (<10%) → tarifa baja, pero 0 contratos con SVA => bonus SVA = 0: 2*26 = 52
+    expect(resultado.total_comision_gas).toBe(2 * 26)
   })
 
   it('el override de potencia solo aplica a electricidad, nunca a gas', () => {
