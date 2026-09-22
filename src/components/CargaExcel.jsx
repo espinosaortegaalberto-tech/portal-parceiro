@@ -1,7 +1,17 @@
 import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { parseExcelFile, detectarPeriodo } from '../lib/parseExcel'
+import { normalizarNombre } from '../lib/parsePartnersExcel'
 import { calcularComisionesPeriodo } from '../lib/calculoComisiones'
+
+// Calcula el siguiente código P-XXXX libre a partir de los partners existentes.
+function siguienteNumeroPartner(partnersExistentes) {
+  const maximo = partnersExistentes.reduce((max, p) => {
+    const match = /^P-(\d+)$/.exec(p.id)
+    return match ? Math.max(max, Number(match[1])) : max
+  }, 0)
+  return maximo + 1
+}
 
 function chunk(array, size) {
   const result = []
@@ -22,7 +32,7 @@ export default function CargaExcel({ onCargaCompleta }) {
   const inputRef = useRef(null)
   const [estado, setEstado] = useState(ESTADOS.IDLE)
   const [periodo, setPeriodo] = useState('')
-  const [pendiente, setPendiente] = useState(null) // { file, filasValidas, erroresValidacion }
+  const [pendiente, setPendiente] = useState(null) // { file, filasValidas, erroresValidacion, excluidosPorEstado, partnersNuevos }
   const [resumen, setResumen] = useState(null)
   const [error, setError] = useState('')
 
@@ -43,7 +53,7 @@ export default function CargaExcel({ onCargaCompleta }) {
     setEstado(ESTADOS.PROCESANDO)
 
     try {
-      const { filas, errores, columnasFaltantes } = await parseExcelFile(file)
+      const { filas, errores, excluidosPorEstado, columnasFaltantes } = await parseExcelFile(file)
 
       if (columnasFaltantes.length > 0) {
         setError(
@@ -53,36 +63,45 @@ export default function CargaExcel({ onCargaCompleta }) {
         return
       }
 
-      const idsUnicos = [...new Set(filas.map((f) => f.id_partner))]
       const { data: partnersExistentes, error: errPartners } = await supabase
         .from('partners')
-        .select('id')
-        .in('id', idsUnicos.length > 0 ? idsUnicos : [''])
+        .select('id, nombre_empresa')
 
       if (errPartners) {
-        setError('Error al validar partners: ' + errPartners.message)
+        setError('Error al consultar los partners: ' + errPartners.message)
         setEstado(ESTADOS.IDLE)
         return
       }
 
-      const idsValidos = new Set(partnersExistentes.map((p) => p.id))
-      const filasValidas = []
-      const erroresValidacion = [...errores]
+      const mapaPorNombre = new Map(
+        partnersExistentes.map((p) => [normalizarNombre(p.nombre_empresa), p.id])
+      )
+      let siguienteNumero = siguienteNumeroPartner(partnersExistentes)
 
-      for (const fila of filas) {
-        if (!idsValidos.has(fila.id_partner)) {
-          erroresValidacion.push({
-            fila: '—',
-            motivo: `id_partner "${fila.id_partner}" no existe en la cartera de partners`,
-          })
-          continue
+      const partnersNuevos = []
+      const filasValidas = filas.map((fila) => {
+        const clave = normalizarNombre(fila.nombre_partner)
+        let idPartner = mapaPorNombre.get(clave)
+
+        if (!idPartner) {
+          idPartner = `P-${String(siguienteNumero).padStart(4, '0')}`
+          siguienteNumero += 1
+          mapaPorNombre.set(clave, idPartner)
+          partnersNuevos.push({ id: idPartner, nombre_empresa: fila.nombre_partner })
         }
-        filasValidas.push(fila)
-      }
+
+        return { ...fila, id_partner: idPartner }
+      })
 
       const periodoDetectado = detectarPeriodo(filasValidas) ?? ''
       setPeriodo(periodoDetectado)
-      setPendiente({ file, filasValidas, erroresValidacion })
+      setPendiente({
+        file,
+        filasValidas,
+        erroresValidacion: errores,
+        excluidosPorEstado,
+        partnersNuevos,
+      })
       setEstado(ESTADOS.IDLE)
     } catch (err) {
       setError('Error al leer el Excel: ' + err.message)
@@ -130,6 +149,15 @@ export default function CargaExcel({ onCargaCompleta }) {
         if (errDelete) throw new Error('Error al reemplazar la carga anterior: ' + errDelete.message)
       }
 
+      if (pendiente.partnersNuevos.length > 0) {
+        const { error: errPartnersNuevos } = await supabase
+          .from('partners')
+          .insert(pendiente.partnersNuevos)
+        if (errPartnersNuevos) {
+          throw new Error('Error al dar de alta los partners nuevos: ' + errPartnersNuevos.message)
+        }
+      }
+
       const { data: userData } = await supabase.auth.getUser()
 
       const { data: nuevaCarga, error: errInsertCarga } = await supabase
@@ -151,15 +179,12 @@ export default function CargaExcel({ onCargaCompleta }) {
         periodo,
         id_contrato: f.id_contrato,
         fecha_cierre: f.fecha_cierre,
-        producto: f.producto,
         electricidad: f.electricidad,
         gas: f.gas,
         potencia_kva: f.potencia_kva,
         debito_directo: f.debito_directo,
         factura_electronica: f.factura_electronica,
         sva: f.sva,
-        importe_contrato: f.importe_contrato,
-        cliente: f.cliente,
       }))
 
       for (const lote of chunk(ventasParaInsertar, 500)) {
@@ -198,6 +223,8 @@ export default function CargaExcel({ onCargaCompleta }) {
         nFilasOk: pendiente.filasValidas.length,
         nErrores: pendiente.erroresValidacion.length,
         erroresValidacion: pendiente.erroresValidacion,
+        excluidosPorEstado: pendiente.excluidosPorEstado,
+        partnersNuevos: pendiente.partnersNuevos,
         nPartnersAfectados: comisionesCalculadas.length,
       })
       setEstado(ESTADOS.RESUMEN)
@@ -223,9 +250,25 @@ export default function CargaExcel({ onCargaCompleta }) {
           <p className="font-semibold">Carga completada para el periodo {resumen.periodo}.</p>
           <ul className="mt-2 list-disc pl-5">
             <li>{resumen.nFilasOk} filas cargadas correctamente</li>
+            <li>{resumen.excluidosPorEstado} filas excluidas por no tener estado OK</li>
             <li>{resumen.nErrores} filas con errores (descartadas)</li>
             <li>{resumen.nPartnersAfectados} partners con comisión calculada</li>
+            {resumen.partnersNuevos.length > 0 && (
+              <li>{resumen.partnersNuevos.length} partners nuevos dados de alta automáticamente</li>
+            )}
           </ul>
+          {resumen.partnersNuevos.length > 0 && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-azul">Ver partners nuevos</summary>
+              <ul className="mt-1 max-h-40 overflow-y-auto pl-5 text-xs">
+                {resumen.partnersNuevos.map((p) => (
+                  <li key={p.id}>
+                    {p.id}: {p.nombre_empresa}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {resumen.erroresValidacion.length > 0 && (
             <details className="mt-2">
               <summary className="cursor-pointer text-azul">Ver errores</summary>
@@ -261,8 +304,24 @@ export default function CargaExcel({ onCargaCompleta }) {
             <div className="mt-4 space-y-3 rounded-xl border border-navy/10 bg-peach/30 p-4">
               <p className="text-sm text-navy">
                 <strong>{pendiente.file.name}</strong>: {pendiente.filasValidas.length} filas válidas,{' '}
+                {pendiente.excluidosPorEstado} excluidas por estado no OK,{' '}
                 {pendiente.erroresValidacion.length} con errores.
               </p>
+
+              {pendiente.partnersNuevos.length > 0 && (
+                <div className="rounded-lg border border-ambar/30 bg-ambar/10 p-3 text-xs text-navy">
+                  <p className="font-semibold">
+                    Se darán de alta {pendiente.partnersNuevos.length} partners nuevos:
+                  </p>
+                  <ul className="mt-1 max-h-32 overflow-y-auto pl-4">
+                    {pendiente.partnersNuevos.map((p) => (
+                      <li key={p.id}>
+                        {p.id}: {p.nombre_empresa}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <label className="block text-sm">
                 <span className="field-label">Periodo (YYYY-MM)</span>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabaseClient'
 
 const PAGE_SIZE = 20
+const TAMANO_LOTE_EXPORT = 1000
 
 function formatEuros(valor) {
   return Number(valor).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -20,6 +22,7 @@ export default function Pagos() {
   const [search, setSearch] = useState('')
   const [searchDebounced, setSearchDebounced] = useState('')
   const [page, setPage] = useState(0)
+  const [exportando, setExportando] = useState(false)
 
   useEffect(() => {
     fetchPeriodos()
@@ -47,29 +50,36 @@ export default function Pagos() {
     setPeriodos([...new Set(data.map((d) => d.periodo))])
   }
 
+  // Devuelve los id_partner que coinciden con el texto buscado, o null si no hay búsqueda activa.
+  // Lanza si la búsqueda falla, y un array vacío si la búsqueda no encuentra ningún partner.
+  async function resolverIdsBusqueda() {
+    if (!searchDebounced) return null
+    const { data: partnersCoincidentes, error: errBusqueda } = await supabase
+      .from('partners')
+      .select('id')
+      .or(`nombre_empresa.ilike.%${searchDebounced}%,id.ilike.%${searchDebounced}%`)
+
+    if (errBusqueda) throw new Error('Error al buscar partners: ' + errBusqueda.message)
+    return partnersCoincidentes.map((p) => p.id)
+  }
+
   async function fetchPagos() {
     setLoading(true)
     setError('')
 
     let idsFiltrados = null
-    if (searchDebounced) {
-      const { data: partnersCoincidentes, error: errBusqueda } = await supabase
-        .from('partners')
-        .select('id')
-        .or(`nombre_empresa.ilike.%${searchDebounced}%,id.ilike.%${searchDebounced}%`)
-
-      if (errBusqueda) {
-        setError('Error al buscar partners: ' + errBusqueda.message)
-        setLoading(false)
-        return
-      }
-      idsFiltrados = partnersCoincidentes.map((p) => p.id)
-      if (idsFiltrados.length === 0) {
-        setPagos([])
-        setTotalCount(0)
-        setLoading(false)
-        return
-      }
+    try {
+      idsFiltrados = await resolverIdsBusqueda()
+    } catch (err) {
+      setError(err.message)
+      setLoading(false)
+      return
+    }
+    if (idsFiltrados && idsFiltrados.length === 0) {
+      setPagos([])
+      setTotalCount(0)
+      setLoading(false)
+      return
     }
 
     let query = supabase
@@ -138,6 +148,69 @@ export default function Pagos() {
     fetchResumen()
   }
 
+  // Exporta a Excel TODAS las comisiones que cumplen los filtros activos (periodo, estado
+  // y búsqueda), no solo la página visible en la tabla.
+  async function exportarExcel() {
+    setExportando(true)
+    setError('')
+
+    try {
+      const idsFiltrados = await resolverIdsBusqueda()
+      if (idsFiltrados && idsFiltrados.length === 0) {
+        throw new Error('No hay partners que coincidan con la búsqueda para exportar.')
+      }
+
+      const filas = []
+      let desde = 0
+      for (;;) {
+        let query = supabase
+          .from('comisiones')
+          .select('id_partner, periodo, total_comision, partners(nombre_empresa)')
+
+        if (periodoFiltro) query = query.eq('periodo', periodoFiltro)
+        if (estadoFiltro) query = query.eq('estado_pago', estadoFiltro)
+        if (idsFiltrados) query = query.in('id_partner', idsFiltrados)
+
+        const { data, error: err } = await query
+          .order('periodo', { ascending: false })
+          .order('id_partner', { ascending: true })
+          .range(desde, desde + TAMANO_LOTE_EXPORT - 1)
+
+        if (err) throw new Error('Error al exportar los pagos: ' + err.message)
+        filas.push(...data)
+        if (data.length < TAMANO_LOTE_EXPORT) break
+        desde += TAMANO_LOTE_EXPORT
+      }
+
+      if (filas.length === 0) {
+        throw new Error('No hay comisiones para el filtro seleccionado.')
+      }
+
+      const datosHoja = filas.map((f) => ({
+        'Código partner': f.id_partner,
+        'Nombre partner': f.partners?.nombre_empresa ?? f.id_partner,
+        Periodo: f.periodo,
+        'Importe comisión a pagar': Number(f.total_comision),
+      }))
+
+      const hoja = XLSX.utils.json_to_sheet(datosHoja)
+      // Columna D (Importe comisión a pagar) en formato moneda euro.
+      for (let fila = 2; fila <= datosHoja.length + 1; fila += 1) {
+        const celda = hoja[`D${fila}`]
+        if (celda) celda.z = '#,##0.00" €"'
+      }
+
+      const libro = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(libro, hoja, 'Pagos')
+
+      XLSX.writeFile(libro, 'Repsol_Comissões_Pagamento_Parceiros.xlsx')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setExportando(false)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   return (
@@ -200,6 +273,9 @@ export default function Pagos() {
           <option value="pendiente">Pendiente de pago</option>
           <option value="pagado">Pagado</option>
         </select>
+        <button onClick={exportarExcel} disabled={exportando} className="btn-secondary ml-auto">
+          {exportando ? 'Exportando…' : 'Exportar a Excel'}
+        </button>
       </div>
 
       {error && (

@@ -1,15 +1,20 @@
 import * as XLSX from 'xlsx'
 
+// Cabeceras (normalizadas) del Excel de extracción del sistema de ventas.
 const COLUMNAS_REQUERIDAS = [
-  'id_partner',
-  'id_contrato',
-  'fecha_cierre',
-  'electricidad',
-  'gas',
-  'debito_directo',
-  'factura_electronica',
+  'nome_agente',
+  'oferta',
+  'cpe',
+  'potencia',
   'sva',
+  'estado_ucloud_e',
+  'data_de_ativacao_e',
+  'tipo_de_conta',
+  'faturacao_eletronica',
 ]
+
+// Únicos estados de "Estado Ucloud E" que se consideran contrato OK a efectos de comisión.
+const ESTADOS_OK = ['Contrato Activado não Factur.', 'Contrato em Vigor']
 
 export function normalizarCabecera(texto) {
   return String(texto)
@@ -20,13 +25,16 @@ export function normalizarCabecera(texto) {
     .replace(/\s+/g, '_')
 }
 
-function parseBooleano(valor) {
-  if (typeof valor === 'boolean') return valor
-  if (typeof valor === 'number') return valor !== 0
-  if (valor === null || valor === undefined) return false
-  const v = String(valor).trim().toLowerCase()
-  return ['si', 'sí', 'true', 'x', '1', 'yes'].includes(v)
+// Normaliza un valor de celda para compararlo sin depender de mayúsculas/acentos.
+function normalizarTexto(valor) {
+  return String(valor ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
 }
+
+const ESTADOS_OK_NORMALIZADOS = new Set(ESTADOS_OK.map(normalizarTexto))
 
 export function parseFecha(valor) {
   if (!valor) return null
@@ -53,9 +61,13 @@ export function parseFecha(valor) {
   return null
 }
 
-// Lee un fichero Excel y devuelve { filas, errores, columnasDetectadas }.
-// filas: array de ventas normalizadas, listas para insertar en `ventas`.
-// errores: array de { fila, motivo } para las filas descartadas.
+// Lee el Excel de extracción del sistema (una fila por contrato) y devuelve
+// { filas, errores, excluidosPorEstado, columnasDetectadas, columnasFaltantes }.
+// filas: ventas normalizadas con `nombre_partner` (aún sin resolver a id_partner:
+//   eso se hace después contra la tabla `partners`, ver CargaExcel.jsx).
+// errores: filas descartadas por datos incompletos o inconsistentes.
+// excluidosPorEstado: nº de filas descartadas solo por no tener un estado "OK"
+//   (no son un error de datos, se muestran aparte en el resumen de la carga).
 export async function parseExcelFile(file) {
   const buffer = await file.arrayBuffer()
   const libro = XLSX.read(buffer, { type: 'array' })
@@ -64,7 +76,13 @@ export async function parseExcelFile(file) {
   const filasCrudas = XLSX.utils.sheet_to_json(hoja, { defval: null, raw: true })
 
   if (filasCrudas.length === 0) {
-    return { filas: [], errores: [], columnasDetectadas: [], columnasFaltantes: COLUMNAS_REQUERIDAS }
+    return {
+      filas: [],
+      errores: [],
+      excluidosPorEstado: 0,
+      columnasDetectadas: [],
+      columnasFaltantes: COLUMNAS_REQUERIDAS,
+    }
   }
 
   const cabecerasOriginales = Object.keys(filasCrudas[0])
@@ -78,72 +96,75 @@ export async function parseExcelFile(file) {
     return {
       filas: [],
       errores: [],
+      excluidosPorEstado: 0,
       columnasDetectadas: cabecerasOriginales,
       columnasFaltantes,
     }
   }
 
-  const tieneImporte = 'importe_contrato' in mapaCabeceras
-  const tieneCliente = 'cliente' in mapaCabeceras
-  const tienePeriodo = 'periodo' in mapaCabeceras
-  const tienePotencia = 'potencia_kva' in mapaCabeceras
-  const tieneProducto = 'producto' in mapaCabeceras
-
   const filas = []
   const errores = []
+  let excluidosPorEstado = 0
 
   filasCrudas.forEach((filaCruda, index) => {
     const numeroFila = index + 2 // +1 por índice base 0, +1 por la cabecera
     const get = (col) => filaCruda[mapaCabeceras[col]]
 
-    const idPartner = get('id_partner')
-    const idContrato = get('id_contrato')
+    const estado = get('estado_ucloud_e')
+    if (!ESTADOS_OK_NORMALIZADOS.has(normalizarTexto(estado))) {
+      excluidosPorEstado += 1
+      return
+    }
 
-    if (!idPartner || String(idPartner).trim() === '') {
-      errores.push({ fila: numeroFila, motivo: 'Falta id_partner' })
+    const nombrePartner = get('nome_agente')
+    const idContrato = get('cpe')
+
+    if (!nombrePartner || String(nombrePartner).trim() === '') {
+      errores.push({ fila: numeroFila, motivo: 'Falta el nombre del partner (Nome Agente)' })
       return
     }
     if (!idContrato || String(idContrato).trim() === '') {
-      errores.push({ fila: numeroFila, motivo: 'Falta id_contrato' })
+      errores.push({ fila: numeroFila, motivo: 'Falta el identificador de contrato (CPE)' })
       return
     }
 
-    const electricidad = parseBooleano(get('electricidad'))
-    const gas = parseBooleano(get('gas'))
-    if (!electricidad && !gas) {
+    const oferta = normalizarTexto(get('oferta'))
+    let electricidad
+    let gas
+    if (oferta.startsWith('leve')) {
+      electricidad = true
+      gas = false
+    } else if (oferta.startsWith('viva')) {
+      electricidad = true
+      gas = true
+    } else {
       errores.push({
         fila: numeroFila,
-        motivo: 'El contrato debe ser de electricidad, de gas, o de ambos',
+        motivo: `Tipo de oferta no reconocido (ni LEVE ni VIVA): "${get('oferta')}"`,
       })
       return
     }
 
+    const potencia = get('potencia')
+
     filas.push({
-      id_partner: String(idPartner).trim(),
+      nombre_partner: String(nombrePartner).trim(),
       id_contrato: String(idContrato).trim(),
-      fecha_cierre: parseFecha(get('fecha_cierre')),
-      producto: tieneProducto && get('producto') ? String(get('producto')).trim() : null,
+      fecha_cierre: parseFecha(get('data_de_ativacao_e')),
       electricidad,
       gas,
-      potencia_kva: tienePotencia && get('potencia_kva') !== null ? Number(get('potencia_kva')) : null,
-      debito_directo: parseBooleano(get('debito_directo')),
-      factura_electronica: parseBooleano(get('factura_electronica')),
-      sva: parseBooleano(get('sva')),
-      importe_contrato: tieneImporte && get('importe_contrato') !== null ? Number(get('importe_contrato')) : null,
-      cliente: tieneCliente && get('cliente') ? String(get('cliente')).trim() : null,
-      periodo: tienePeriodo && get('periodo') ? String(get('periodo')).trim() : null,
+      potencia_kva: potencia !== null && potencia !== '' ? Number(potencia) : null,
+      debito_directo: normalizarTexto(get('tipo_de_conta')) === 'debito direto',
+      factura_electronica: normalizarTexto(get('faturacao_eletronica')) === 's',
+      sva: normalizarTexto(get('sva')) !== '' && normalizarTexto(get('sva')) !== 'sem sva',
     })
   })
 
-  return { filas, errores, columnasDetectadas: cabecerasOriginales, columnasFaltantes: [] }
+  return { filas, errores, excluidosPorEstado, columnasDetectadas: cabecerasOriginales, columnasFaltantes: [] }
 }
 
-// Deduce el periodo (YYYY-MM) más frecuente a partir de fecha_cierre, si no viene
-// una columna "periodo" explícita en el Excel.
+// Deduce el periodo (YYYY-MM) más frecuente a partir de fecha_cierre.
 export function detectarPeriodo(filas) {
-  const conPeriodoExplicito = filas.find((f) => f.periodo)
-  if (conPeriodoExplicito) return conPeriodoExplicito.periodo
-
   const conteo = new Map()
   for (const fila of filas) {
     if (!fila.fecha_cierre) continue
