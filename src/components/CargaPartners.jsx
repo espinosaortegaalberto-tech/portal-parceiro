@@ -108,6 +108,7 @@ export default function CargaPartners({ onClose, onCargaCompleta }) {
       const payload = pendiente.filasValidas.map((f) => ({
         id: f.id,
         nombre_empresa: f.nombre_empresa,
+        nif: f.nif,
         direccion: f.direccion,
         email: f.email,
         telefono: f.telefono,

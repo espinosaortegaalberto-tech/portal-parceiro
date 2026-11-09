@@ -6,6 +6,7 @@ const COLUMNAS_REQUERIDAS = ['id', 'nombre_empresa']
 const COLUMNAS_PLANTILLA = [
   'id',
   'nombre_empresa',
+  'nif',
   'sector',
   'region',
   'categoria',
@@ -23,6 +24,7 @@ export function descargarPlantillaPartners() {
   const filaEjemplo = {
     id: 'P-0007',
     nombre_empresa: 'Nombre Ejemplo SL',
+    nif: 'B12345678',
     sector: 'Luz y Gas',
     region: 'Centro',
     categoria: 'Plata',
@@ -100,6 +102,7 @@ export async function parsePartnersExcelFile(file) {
       fila: numeroFila,
       id: String(id).trim(),
       nombre_empresa: String(nombreEmpresa).trim(),
+      nif: get('nif') ? String(get('nif')).trim() : null,
       sector: get('sector') ? String(get('sector')).trim() : null,
       region: get('region') ? String(get('region')).trim() : null,
       categoria: get('categoria') ? String(get('categoria')).trim() : null,

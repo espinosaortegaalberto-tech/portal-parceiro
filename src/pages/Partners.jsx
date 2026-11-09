@@ -116,6 +116,7 @@ export default function Partners() {
     const payload = {
       id: form.id.trim(),
       nombre_empresa: form.nombre_empresa.trim(),
+      nif: form.nif || null,
       direccion: form.direccion || null,
       email: form.email || null,
       telefono: form.telefono || null,
@@ -242,6 +243,7 @@ export default function Partners() {
             <tr>
               <th className="th-navy">Código</th>
               <th className="th-navy">Empresa</th>
+              <th className="th-navy">NIF</th>
               <th className="th-navy">Sector</th>
               <th className="th-navy">Categoría</th>
               <th className="th-navy">Contacto</th>
@@ -253,13 +255,13 @@ export default function Partners() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gris-azul">
+                <td colSpan={9} className="px-4 py-8 text-center text-gris-azul">
                   Cargando…
                 </td>
               </tr>
             ) : partners.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gris-azul">
+                <td colSpan={9} className="px-4 py-8 text-center text-gris-azul">
                   No se han encontrado partners.
                 </td>
               </tr>
@@ -282,6 +284,7 @@ export default function Partners() {
                       {p.nombre_empresa}
                     </button>
                   </td>
+                  <td className="px-4 py-3">{p.nif || '—'}</td>
                   <td className="px-4 py-3">{p.sector || '—'}</td>
                   <td className="px-4 py-3">{p.categoria || '—'}</td>
                   <td className="px-4 py-3">{p.contacto || p.email || '—'}</td>

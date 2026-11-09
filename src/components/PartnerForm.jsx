@@ -3,6 +3,7 @@ import { useState } from 'react'
 const emptyPartner = {
   id: '',
   nombre_empresa: '',
+  nif: '',
   direccion: '',
   email: '',
   telefono: '',
@@ -68,6 +69,15 @@ export default function PartnerForm({ partner, onSave, onCancel, saving }) {
               type="text"
               value={form.nombre_empresa}
               onChange={(e) => handleChange('nombre_empresa', e.target.value)}
+              className="input"
+            />
+          </Field>
+
+          <Field label="NIF">
+            <input
+              type="text"
+              value={form.nif || ''}
+              onChange={(e) => handleChange('nif', e.target.value)}
               className="input"
             />
           </Field>

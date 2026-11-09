@@ -55,6 +55,7 @@ export default function PartnerDetail({ partnerId, onClose, onEditar }) {
               </div>
 
               <div className="mb-6 mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                <Campo etiqueta="NIF" valor={partner.nif} />
                 <Campo etiqueta="Sector" valor={partner.sector} />
                 <Campo etiqueta="Región" valor={partner.region} />
                 <Campo etiqueta="Categoría" valor={partner.categoria} />
